@@ -1,61 +1,55 @@
 from faker import Faker
-import random
+from random import randint
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from main import Restaurant, Review, Customer
+import random
 
-from main import Restaurant, Review
-from main import Review
-from main import Customer
+engine = create_engine('sqlite:///db.db')
+Session = sessionmaker(bind=engine)
+session = Session()
 
-fake = Faker()
+faker = Faker()
 
-if __name__ == '__main__':
-    
-    engine = create_engine('sqlite:///db.db')
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    # session.query().delete()
-    session.commit()
-    
-# tilapiatips = Restaurant(name="Tilapia Tips", price=60)
-# mickyds = Restaurant(name="Micky D's", price=30)
-# nobu = Restaurant(name="Nobu", price=50)
-# grenierpain = Restaurant(name="Le Grenier au Pain", price=62)
+# Comment out to avoid clearing existing data
+session.query(Restaurant).delete()
+session.query(Review).delete()
+session.query(Customer).delete()
+session.commit()
 
-# print("New Restaurant alert...")
+# Create restaurants
+restaurants = [
+    Restaurant(name=faker.name(), price=randint(0, 60))
+    for _ in range(50)
+]
+session.bulk_save_objects(restaurants)
+session.commit()
 
-# session.bulk_save_objects([tilapiatips, mickyds, nobu, grenierpain])
-# session.commit()
+# Create customers
+customers = [
+    Customer(name=faker.name()) for _ in range(50)
+]
+session.bulk_save_objects(customers)
+session.commit()
 
-    # Restaurant.add_restaurant(session, 'Shicken Wangs Place', price=15)
-    # Restaurant.add_restaurant(session, 'Rib Shack', price=18)
-    # Restaurant.add_restaurant(session, 'ExtraOrdinary Ugali', price=35)
-    # Restaurant.add_restaurant(session, 'Poly Nyama Choma', price=12)
-    # session.commit()
+# Generate 10 random reviews
+desired_star_ratings = [3, 5]
+star_rating = random.choice(desired_star_ratings)
 
-# Shicken_Wangs_Place = Restaurant(name='Shicken Wangs Place', price=15)
-# session.add(Shicken_Wangs_Place)
-# session.commit()
-# Rib_Shack = Restaurant(name='Rib Shack', price=18)
-# session.add(Rib_Shack)
-# session.commit()
-# Extra_Ordinary_Ugali = Restaurant(name='ExtraOrdinary Ugali', price=35)
-# session.add(Extra_Ordinary_Ugali)
-# session.commit()
-# Poly_Nyama_Choma = Restaurant(name='Poly Nyama Choma', price=12)
-# session.add(Poly_Nyama_Choma)
-# session.commit()
+for _ in range(10):
+    # Choose random restaurant and customer
+    restaurant = random.choice(session.query(Restaurant).all())
+    customer = random.choice(session.query(Customer).all())
 
-# restaurant = session.query(Restaurant).all()
-# print(restaurant)
+    # Create new review
+    review = Review(star_rating=star_rating,
+                    restaurant=restaurant,
+                    customer=customer)
 
-# restaurants = [
-#     Restaurant(
-#         name=fake.name(),
-#         price=random.randint(0, 60)
-#     )
-# for i in range(50)]
+    # Add review to session
+    session.add(review)
 
+# Commit changes to database
+session.commit()
 
-# session.bulk_save_objects(restaurants)
-# session.commit()
+print("Sample data successfully added to the database!")
